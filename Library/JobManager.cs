@@ -73,14 +73,20 @@
         {
             return () =>
             {
-                var job = JobFactory.GetJobInstance<T>();
-                try
+                // NOTE: Job execution here is a "per request" scope so
+                // allow the JobFactory implementation to return it's 
+                // implementation for managing per request lifecycles
+                using (var scope = JobFactory.GetScope())
                 {
-                    job.Execute();
-                }
-                finally
-                {
-                    DisposeIfNeeded(job);
+                    var job = scope.GetJobInstance<T>();
+                    try
+                    {
+                        job.Execute();
+                    }
+                    finally
+                    {
+                        DisposeIfNeeded(job);
+                    }
                 }
             };
         }
